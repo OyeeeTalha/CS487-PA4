@@ -7,13 +7,19 @@ on:
   push:
     branches:
       - main
+    paths:
+      - 'webapp/**'
   workflow_dispatch:
 
 jobs:
   build:
     runs-on: ubuntu-latest
     permissions:
-      contents: read #This is required for actions/checkout
+      contents: read # This is required for actions/checkout
+    
+    defaults:
+      run:
+        working-directory: ./webapp
 
     steps:
       - uses: actions/checkout@v4
@@ -33,7 +39,8 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: node-app
-          path: .
+          
+          path: ./webapp
 
   deploy:
     runs-on: ubuntu-latest
@@ -44,12 +51,14 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: node-app
-      
+          
       - name: 'Deploy to Azure Web App'
         id: deploy-to-webapp
         uses: azure/webapps-deploy@v3
         with:
           app-name: 'pa4-23030025'
           slot-name: 'Production'
+          # Because we only uploaded the webapp folder, downloading it 
+          # unpacks it to the current directory (.), so this stays '.'
           package: .
           publish-profile: ${{ secrets.AZUREAPPSERVICE_PUBLISHPROFILE_A5750104826F439B92294A2069660414 }}
